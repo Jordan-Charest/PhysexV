@@ -14,10 +14,6 @@ LABEL - Channel
 921.8 13.95
 1173.19 17.74
 3895.6 59.54
-<<ROI>>
-884 952
-1146 1203
-3863 3930
 <<DATA>>
 0
 0
@@ -4159,5 +4155,9 @@ Accumulation Time: 82
 Dead Time: 25.44%
 HV Volt: 178V
 TEC Temp: 229K
-Board Temp: 28°C
+Board Temp: 28ï¿½C
+<<ROI>>
+884 952
+1146 1203
+3863 3930
 <<DPP STATUS END>>
