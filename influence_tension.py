@@ -5,11 +5,12 @@ import matplotlib.pyplot as plt
 import sets_donnees
 
 
-filenames = sets_donnees.Cu_set
+filenames = sets_donnees.tension_set
 diviser_par_temps = True # Diviser le nb de comptes par le live time
-largeur = 30 # Largeur en nombre de canaux à analyser
-centre = 31 # Énergie en keV du centre à analyser
-filtre_nom = "Cu"
+section = False # Analyser seulement la section précisée ci-bas
+largeur = 20 # Largeur en nombre de canaux à analyser
+centre = 20 # Énergie en keV du centre à analyser
+filtre_nom = "Courant"
 
 tension_array = np.zeros(len(filenames))
 courant_array = np.zeros(len(filenames))
@@ -31,15 +32,18 @@ for i, filename in enumerate(filenames):
     else:
         epaisseur = int(filtre[2:])
 
-    indice_centre = find_nearest(abscisses_array, centre)
-    indice_min = int(indice_centre-largeur/2)
-    indice_max = int(indice_centre+largeur/2)
+    if section:
+        indice_centre = find_nearest(abscisses_array, centre)
+        indice_min = int(indice_centre-largeur/2)
+        indice_max = int(indice_centre+largeur/2)
 
-    data_reduit = data_array[indice_min:indice_max]
-    moy = np.mean(data_reduit)
+        data_reduit = data_array[indice_min:indice_max]
+        moy = np.sum(data_reduit)
+    else:
+        moy = np.sum(data_array)
 
-    tension_array[i] = tension
-    courant_array[i] = courant
+    tension_array[i] = tension.replace(",", ".")
+    courant_array[i] = courant.replace(",", ".")
     livetime_array[i] = live_time
     realtime_array[i] = real_time
     epaisseur_array[i] = epaisseur
@@ -51,31 +55,24 @@ for i, filename in enumerate(filenames):
 moy_comptes_array = moy_comptes_array / moy0
 
 ### AFFICHAGE DU GRAPHIQUE ###
-guess = (moy0, 0)
-a, mu = exponential_fit(epaisseur_array, moy_comptes_array, guess)
-print(a)
-print(mu)
 
-#### NOTE: mu est ici le coefficient d'atténuation pour le matériau
 
-fig = plt.scatter(epaisseur_array, moy_comptes_array)
+fig = plt.scatter(tension_array, moy_comptes_array)
 
-x_points = np.arange(epaisseur_array[0], epaisseur_array[-1], (epaisseur_array[-1]-epaisseur_array[0])/50)
-plt.plot(x_points, exponential(x_points, a, mu))
 
 
 
 # plt.yscale("log")
 # plt.xscale("log")
-plt.xlabel("Épaisseur de filtre [mil]")
+plt.xlabel("Tension [kV]")
 
 if diviser_par_temps:
-    plt.ylabel("Rapport Nt/N0 moyen par seconde")
+    plt.ylabel("Somme du nombre de comptes par seconde")
 else:
-    plt.ylabel("Rapport Nt/N0 moyen total")
+    plt.ylabel("Somme du nombre de comptes total")
 
 # DEMANDER: nb de comptes, diviser par live time ou real time?
 
-plt.title(f"Nombre de comptes en fonction de l'épaisseur de filtre, {tension} V, {courant} A, filtres {filtre_nom}")
+plt.title(f"Nombre de comptes en fonction de la tension, {courant} uA")
 
 plt.show()
