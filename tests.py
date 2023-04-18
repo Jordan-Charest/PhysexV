@@ -1,5 +1,5 @@
-indices = [1, 3, 5, 6]
+from fonctions import find_nth_occurrence
 
-data = [2, 5, 4, 3, 3, 5, 7, 4, 4, 6]
+string = "a_bas_v"
 
-print([data[indice] for indice in indices])
+print(find_nth_occurrence(string, "_", 2))

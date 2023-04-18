@@ -5,7 +5,8 @@ from fonctions import *
 
 ### PARAMÈTRES ###
 
-filename = "50_15_pas" # Fichier à charger
+filename = "50_15_Cu&1_Mo&1" # Fichier à charger
+multifiltre = True
 filepath = f"./Data/{filename}.mca" # Nom du fichier à analyser
 diviser_par_temps = True # Diviser le nb de comptes par le live time
 
@@ -17,7 +18,6 @@ tension, courant, filtre = extraire_params(filename)
 data_array, abscisses_array, live_time, real_time = extraire_data(filepath)
 # indices_pics = trouver_pic(data_array)
 # print(indices_pics)
-
 
 
 ### TRAITEMENT DES DONNÉES ###

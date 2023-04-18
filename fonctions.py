@@ -22,10 +22,12 @@ def extraire_data(filepath):
     # Extraction des données
     for index, line in enumerate(f):
         if index == 7: # Live time
-            live_time = float(line[-10:])
+            ind = find_nth_occurrence(line, "-", 1)
+            live_time = float(line[ind+2:])
 
         if index == 8: # Real time
-            real_time = float(line[-10:])
+            ind = find_nth_occurrence(line, "-", 1)
+            real_time = float(line[ind+2:])
 
         if index > 4112: # Fin des données
             break
@@ -41,8 +43,8 @@ def extraire_data(filepath):
 def extraire_params(filename):
 
     # Indices des underscore pour titres
-    index_first_under = filename.index("_")
-    index_second_under = filename.index("_",index_first_under+1,len(filename)-1)
+    index_first_under = find_nth_occurrence(filename, "_", 1)
+    index_second_under = find_nth_occurrence(filename, "_", 2)
 
     # Extraction des valeurs de tension, du courant et des filtres
     tension = filename[:index_first_under]
@@ -52,6 +54,10 @@ def extraire_params(filename):
 
     return tension, courant, filtre
 
+def linear_fit(xdata, ydata):
+    params = linregress(xdata, ydata)
+
+    return params.slope, params.intercept
 
 def etalonnage(canaux):
 
@@ -78,9 +84,12 @@ def gaussian_fit(xdata, ydata):
 def exponential(x, a, b):
     return a * np.exp(-b * x)
 
-def exponential_fit(xdata, ydata, guess):
+def atau_Z(Z, c, n):
+    return c * Z ** n
+
+def exponential_fit(xdata, ydata, guess, func=exponential):
     
-    popt, pcov = curve_fit(exponential, xdata, ydata, p0=guess)
+    popt, pcov = curve_fit(func, xdata, ydata, p0=guess)
 
     return popt[0], popt[1]
 
@@ -90,5 +99,16 @@ def find_nearest(array, value):
     return index
 
 def a_tau(N, A, rho, t):
+    print(f"N={N}, A={A}, rho={rho}, t={t}")
     avo = 6.022e23
     return -np.log(N) * A / (rho * t * avo) - 0.2 * A / avo
+
+
+def find_nth_occurrence(string, substring, n):
+    # Finds the index of the nth occurrence of substring in string
+    # Tiré de StackOverflow: https://stackoverflow.com/questions/1883980/find-the-nth-occurrence-of-substring-in-a-string
+    start = string.find(substring)
+    while start >= 0 and n > 1:
+        start = string.find(substring, start+len(substring))
+        n -= 1
+    return start
