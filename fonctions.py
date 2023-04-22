@@ -50,7 +50,7 @@ def extraire_params(filename):
     tension = filename[:index_first_under]
     courant = filename[index_first_under+1:index_second_under]
     filtre = filename[index_second_under+1:]
-    print(f"Analyse du filtre [{filtre}] à {tension} V et {courant} A")
+    # print(f"Analyse du filtre [{filtre}] à {tension} V et {courant} A")
 
     return tension, courant, filtre
 
@@ -98,10 +98,27 @@ def find_nearest(array, value):
     index = np.argmin(np.abs(array-value))
     return index
 
-def a_tau(N, A, rho, t):
-    print(f"N={N}, A={A}, rho={rho}, t={t}")
+def a_tau(N0, Nt, A, rho, t):
+
+    # print(f"A={A}, rho={rho}, t={t}")
+
+    t_incert = 0.06375
+    N0_val = N0[0]
+    N0_incert = N0[1]
+    Nt_val = Nt[0]
+    Nt_incert = Nt[1]
+
+    # print(f"N0={N0_val}±{N0_incert}"); print(f"Nt={Nt_val}±{Nt_incert}")
+
+    N = Nt_val/N0_val
+    N_incert = N * np.sqrt((N0_incert/N0_val)**2 + (Nt_incert/Nt_val)**2)
+    # print(f"N = {N}±{N_incert}")
+    ln_t = np.log(N)/t
+    incert_ln_t = ln_t * np.sqrt((N_incert/N)**2 + (t_incert/t)**2)
+
     avo = 6.022e23
-    return -np.log(N) * A / (rho * t * avo) - 0.2 * A / avo
+    
+    return (-np.log(N) * A / (rho * t * avo) - 0.2 * A / avo, (incert_ln_t)*A/(rho*avo))
 
 
 def find_nth_occurrence(string, substring, n):

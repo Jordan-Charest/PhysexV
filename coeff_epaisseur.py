@@ -18,6 +18,7 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
     livetime_array = np.zeros(len(filenames))
     realtime_array = np.zeros(len(filenames))
     epaisseur_array = np.zeros(len(filenames))
+    pythasson_array = np.zeros(len(filenames))
     somme_comptes_array = np.zeros(len(filenames))
     somme0 = 0
 
@@ -44,7 +45,7 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
         # Selection de la bonne plage
 
         if selected_range == "all":
-            indice_min = find_nearest(abscisses_array, 7.2)
+            indice_min = find_nearest(abscisses_array, 5)
             indice_max = find_nearest(abscisses_array, 50)
 
         elif selected_range == "31keV":
@@ -63,7 +64,16 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
             indice_max = int(indice_centre+largeur/2)
 
 
+        
+
         data_reduit = data_array[indice_min:indice_max]
+
+        array_poisson = np.sqrt(data_reduit)
+        pythasson = 0
+        for j in range(len(array_poisson)):
+            pythasson += array_poisson[j]**2
+        pythasson = np.sqrt(pythasson)/live_time
+
         somme = np.sum(data_reduit)
 
 
@@ -76,11 +86,14 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
         realtime_array[i] = real_time
         epaisseur_array[i] = epaisseur
         somme_comptes_array[i] = somme
+        pythasson_array[i] = pythasson
 
         if i == 0:
             somme0 = somme
 
     moy_comptes_array = somme_comptes_array / somme0
+
+    pythasson_array = moy_comptes_array * np.sqrt((pythasson_array[i]/somme_comptes_array[i])**2 + (pythasson_array[0]/somme0)**2)
 
     ### AFFICHAGE DU GRAPHIQUE ###
     guess = (somme0, 0)
@@ -90,7 +103,7 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
 
     #### NOTE: mu est ici le coefficient d'atténuation pour le matériau
 
-    fig = plt.errorbar(epaisseur_array, moy_comptes_array, xerr = uncx, yerr = uncy, label=f"{selected_range}, mu={mu:.3f}", fmt='o', capsize=3)
+    fig = plt.errorbar(epaisseur_array, moy_comptes_array, xerr = uncx, yerr = pythasson_array, label=f"{selected_range}, mu={mu:.3f}", fmt='o', capsize=5, markersize=3)
     x_points = np.arange(epaisseur_array[0], epaisseur_array[-1], (epaisseur_array[-1]-epaisseur_array[0])/50)
     plt.plot(x_points, exponential(x_points, a, mu))
 
@@ -117,17 +130,17 @@ path = "./Data/seance2/"
 
 title = "Nb comptes en fct de l'épaisseur de filtre, 50 kV, 15 uA, Aluminium"
 
-uncx = np.zeros(len(filenames)-1)
-uncy = np.ones(len(filenames)-1)
-fig1 = generer_graph(filenames[1:], path, title, selected_range="31keV", uncertainties=(uncx, uncy))
+uncx = np.zeros(len(filenames))
+uncy = np.ones(len(filenames))
+fig1 = generer_graph(filenames, path, title, selected_range="31keV", uncertainties=(uncx, uncy))
 
-uncx = np.zeros(len(filenames)-1)
-uncy = np.ones(len(filenames)-1)
-fig2 = generer_graph(filenames[1:], path, title, selected_range="all", uncertainties=(uncx, uncy))
+uncx = np.zeros(len(filenames))
+uncy = np.ones(len(filenames))
+fig2 = generer_graph(filenames, path, title, selected_range="all", uncertainties=(uncx, uncy))
 
-uncx = np.zeros(len(filenames)-1)
-uncy = np.ones(len(filenames)-1)
-fig3 = generer_graph(filenames[1:], path, title, selected_range="12keV", uncertainties=(uncx, uncy))
+uncx = np.zeros(len(filenames))
+uncy = np.ones(len(filenames))
+fig3 = generer_graph(filenames, path, title, selected_range="12keV", uncertainties=(uncx, uncy))
 
 plt.legend()
 plt.show()

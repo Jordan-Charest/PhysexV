@@ -8,7 +8,7 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
     
     uncx, uncy = uncertainties[0], uncertainties[1]
 
-    array_dict = [sets_donnees.cuivre, sets_donnees.aluminium, sets_donnees.tungstene, sets_donnees.molybdene, sets_donnees.argent]
+    array_dict = [sets_donnees.aluminium, sets_donnees.cuivre, sets_donnees.molybdene, sets_donnees.argent, sets_donnees.tungstene]
     Z_array = [dico["Z"] for dico in array_dict]
     A_array = [dico["A"] for dico in array_dict]
     rho_array = [dico["rho"] for dico in array_dict]
@@ -24,6 +24,7 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
     realtime_array = np.zeros(len(filenames))
     epaisseur_array = np.zeros(len(filenames))
     somme_comptes_array = np.zeros(len(filenames))
+    incert_y_array = np.zeros(len(filenames))
     somme0 = 0
 
     for i, filename in enumerate(filenames):
@@ -38,8 +39,8 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
             continue
 
         abscisses_array = etalonnage(abscisses_array)
-        print(f"live time: {live_time}")
-        print(f"real time: {real_time}")
+        # print(f"live time: {live_time}")
+        # print(f"real time: {real_time}")
 
         if filtre == "pas":
             epaisseur = 0
@@ -50,7 +51,7 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
         # Selection de la bonne plage
 
         if selected_range == "all":
-            indice_min = find_nearest(abscisses_array, 7.2)
+            indice_min = find_nearest(abscisses_array, 5)
             indice_max = find_nearest(abscisses_array, 50)
 
         elif selected_range == "31keV":
@@ -83,10 +84,19 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
         epaisseur_array[i] = epaisseur
         somme_comptes_array[i] = somme
 
+        print(f"N{i}={somme_comptes_array[i]}")
+
         if i == 0:
             somme0 = somme
 
-    somme_comptes_array = somme_comptes_array / somme0
+    # print(f"N0={somme0}")
+
+    incert_y_array = np.sqrt(somme_comptes_array)
+    # print(f"ARRAY Y: {somme_comptes_array}")
+    # print(f"INCERTITUDE SUR ARRAY Y: {incert_y_array}")
+    N0_tuple = (somme_comptes_array[0], incert_y_array[0])
+
+    # somme_comptes_array = somme_comptes_array / somme0
 
     tension_array = tension_array[1:]
     courant_array = courant_array[1:]
@@ -94,23 +104,31 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
     realtime_array = realtime_array[1:]
     epaisseur_array = epaisseur_array[1:]
     somme_comptes_array = somme_comptes_array[1:]
+    incert_y_array = incert_y_array[1:]
+    
 
-    ### AFFICHAGE DU GRAPHIQUE ###
-    guess = (somme0, 0)
-    a, mu = exponential_fit(epaisseur_array, somme_comptes_array, guess)
-    print(f"a = {a}")
-    print(f"mu = {mu}")
-
-    #### NOTE: mu est ici le coefficient d'atténuation pour le matériau
+    # ### AFFICHAGE DU GRAPHIQUE ###
+    # guess = (somme0, 0)
+    # a, mu = exponential_fit(epaisseur_array, somme_comptes_array, guess)
+    # print(f"a = {a}")
+    # print(f"mu = {mu}")
 
     atau_array = np.zeros(len(array_dict))
+    atau_incert_array = np.zeros(len(array_dict))
     for i in range(len(array_dict)):
-        print(f"Matériau: Z={Z_array[i]}")
-        atau = a_tau(somme_comptes_array[i], A_array[i], rho_array[i], epaisseur_array[i]*0.00254)
+        # print(f"Matériau: Z={Z_array[i]}")
+        (atau, atau_incert) = a_tau(N0_tuple, (somme_comptes_array[i], incert_y_array[i]), A_array[i], rho_array[i], epaisseur_array[i]*0.00254)
+        # print(atau_incert)
         atau_array[i] = atau
+        atau_incert_array[i] = atau_incert
+
+    print(f"Range: {selected_range}")
+    print(f"ARRAY ATAU: {atau_array}")
 
     Z_array_log = np.log10(Z_array)
     atau_array_log = np.log10(atau_array)
+    print(f"ARRAY INCERTITUDE ATAU: {atau_incert_array}")
+    atau_incert_array_log = np.log10(atau_incert_array)
 
     slope, intercept = linear_fit(Z_array_log, atau_array_log)
     print(f"slope={slope}, intercept={intercept}")
@@ -128,12 +146,14 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
     # fig = plt.scatter(Z_array, atau_array)
     x_steps = np.log10(np.arange(10, 74, 1))
     # plt.plot(x_steps, atau_Z(x_steps, c, n))
-    fig = plt.scatter(Z_array_log, atau_array_log, label=selected_range)
-    plt.plot(x_steps, x_steps*slope + intercept)
+    fig = plt.errorbar(Z_array, atau_array, xerr = 0, yerr = atau_incert_array, label=f"{selected_range}", fmt='o', capsize=3, markersize=3)
+    for i, Zlog in enumerate(Z_array_log):
+        plt.annotate(f"{10**Zlog:.0f}", (Zlog, atau_array_log[i]) )
+    plt.plot(10**x_steps, 10**(x_steps*slope + intercept))
     plt.title(title)
 
-    # plt.yscale("log")
-    # plt.xscale("log")
+    plt.yscale("log")
+    plt.xscale("log")
     plt.xlabel("log10(Z)")
     plt.ylabel("log10(atau)")
 
