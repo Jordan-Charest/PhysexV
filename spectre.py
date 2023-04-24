@@ -5,7 +5,7 @@ from fonctions import *
 
 ### PARAMÈTRES ###
 
-filename = "50_15_pas" # Fichier à charger
+filename = "50_15_Al&10" # Fichier à charger
 multifiltre = True
 filepath = f"./Data/{filename}.mca" # Nom du fichier à analyser
 diviser_par_temps = True # Diviser le nb de comptes par le live time
@@ -48,6 +48,8 @@ else:
 # DEMANDER: nb de comptes, diviser par live time ou real time?
 
 plt.title(f"Nombre de comptes en fonction de l'énergie, {tension} V, {courant} A, filtres {filtre}")
+
+plt.axvline(x=10, color="r", label="10 keV")
 
 plt.show()
 

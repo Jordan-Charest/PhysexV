@@ -8,7 +8,8 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
     
     uncx, uncy = uncertainties[0], uncertainties[1]
 
-    array_dict = [sets_donnees.aluminium, sets_donnees.cuivre, sets_donnees.molybdene, sets_donnees.argent, sets_donnees.tungstene]
+    # array_dict = [sets_donnees.aluminium, sets_donnees.cuivre, sets_donnees.molybdene, sets_donnees.argent, sets_donnees.tungstene]
+    array_dict = [sets_donnees.aluminium, sets_donnees.cuivre, sets_donnees.molybdene, sets_donnees.tungstene]
     Z_array = [dico["Z"] for dico in array_dict]
     A_array = [dico["A"] for dico in array_dict]
     rho_array = [dico["rho"] for dico in array_dict]
@@ -59,8 +60,8 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
             indice_min = int(indice_centre-15)
             indice_max = int(indice_centre+15)
 
-        elif selected_range == "12keV":
-            indice_centre = find_nearest(abscisses_array, 12)
+        elif selected_range == "10keV":
+            indice_centre = find_nearest(abscisses_array, 10)
             indice_min = int(indice_centre-15)
             indice_max = int(indice_centre+15)
 
@@ -117,7 +118,7 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
     atau_incert_array = np.zeros(len(array_dict))
     for i in range(len(array_dict)):
         # print(f"Matériau: Z={Z_array[i]}")
-        (atau, atau_incert) = a_tau(N0_tuple, (somme_comptes_array[i], incert_y_array[i]), A_array[i], rho_array[i], epaisseur_array[i]*0.00254)
+        (atau, atau_incert) = a_tau(N0_tuple, (somme_comptes_array[i], incert_y_array[i]), A_array[i], rho_array[i], epaisseur_array[i]*.002540)
         # print(atau_incert)
         atau_array[i] = atau
         atau_incert_array[i] = atau_incert
@@ -146,7 +147,8 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
     # fig = plt.scatter(Z_array, atau_array)
     x_steps = np.log10(np.arange(10, 74, 1))
     # plt.plot(x_steps, atau_Z(x_steps, c, n))
-    fig = plt.errorbar(Z_array, atau_array, xerr = 0, yerr = atau_incert_array, label=f"{selected_range}", fmt='o', capsize=3, markersize=3)
+    # fig = plt.errorbar(Z_array, atau_array, xerr = 0, yerr = atau_incert_array, label=f"{selected_range}", fmt='o', capsize=3, markersize=3)
+    fig = plt.scatter(Z_array, atau_array, label=f"{selected_range}")
     for i, Zlog in enumerate(Z_array_log):
         plt.annotate(f"{10**Zlog:.0f}", (Zlog, atau_array_log[i]) )
     plt.plot(10**x_steps, 10**(x_steps*slope + intercept))
@@ -162,7 +164,7 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
 
 ranges = ["all", "31keV", "12keV", "custom"]
 
-filenames = sets_donnees.materiaux_set
+filenames = sets_donnees.materiaux_set_pas_ag
 path = "./Data/"
 
 title = "a_tau en fct du Z du matériau, 50 kV, 15 uA"
@@ -177,7 +179,7 @@ fig2 = generer_graph(filenames, path, title, selected_range="all", uncertainties
 
 uncx = np.zeros(len(filenames)-1)
 uncy = np.ones(len(filenames)-1)
-fig3 = generer_graph(filenames, path, title, selected_range="12keV", uncertainties=(uncx, uncy))
+fig3 = generer_graph(filenames, path, title, selected_range="10keV", uncertainties=(uncx, uncy))
 
 plt.legend()
 plt.show()

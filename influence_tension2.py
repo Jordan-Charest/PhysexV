@@ -103,21 +103,20 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
     
 
     # Curve fit de droite
-    print(poisson_array)
-    popt, pcov = fit_w_sigma(courant_array, somme_comptes_array, poisson_array, linear)
+    popt, pcov = fit_w_sigma(tension_array, somme_comptes_array, poisson_array, linear)
 
     # Calcul R2:
-    residuals = somme_comptes_array - linear(courant_array, *popt)
+    residuals = somme_comptes_array - linear(tension_array, *popt)
     ss_res = np.sum(residuals**2)
     ss_tot = np.sum((somme_comptes_array-np.mean(somme_comptes_array))**2)
     r_squared = 1 - (ss_res/ss_tot)
 
-    xdata = np.arange(courant_array[0], courant_array[-1]+1, 0.5)
+    xdata = np.arange(tension_array[0], tension_array[-1]+1, 0.5)
 
-    fig = plt.errorbar(courant_array, somme_comptes_array, yerr=poisson_array, label=f"{selected_range}", capsize=3, markersize=3, fmt='o')
+    fig = plt.errorbar(tension_array, somme_comptes_array, yerr=poisson_array, label=f"{selected_range}", capsize=3, markersize=3, fmt='o')
 
 
-    plt.plot(xdata, xdata*popt[0]+popt[1], label=f"Lissage linéaire avec incertitude, pente={popt[0]:.1f}, R^2={r_squared:.5f}")
+    # plt.plot(xdata, xdata*popt[0]+popt[1], label=f"Lissage linéaire avec incertitude, pente={popt[0]:.1f}, R^2={r_squared:.5f}")
 
     # plt.yscale("log")
     # plt.xscale("log")
@@ -129,14 +128,14 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
 
 # DEMANDER: nb de comptes, diviser par live time ou real time?
 
-    plt.title(f"Nombre de comptes en fonction du courant, {tension} kV")
+    plt.title(f"Nombre de comptes en fonction de la tension, {courant} uA")
 
     return fig
 
 
 ranges = ["all", "31keV", "12keV", "custom"]
 
-filenames = sets_donnees.courant_set
+filenames = sets_donnees.tension_set
 path = "./Data/"
 
 title = "Nb comptes en fct de l'épaisseur de filtre, 50 kV, 15 uA, Aluminium"

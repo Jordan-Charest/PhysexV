@@ -54,6 +54,12 @@ def extraire_params(filename):
 
     return tension, courant, filtre
 
+def fit_w_sigma(xdata, ydata, incert, func):
+
+    popt, pcov = curve_fit(func, xdata, ydata, sigma=incert)
+
+    return popt, pcov
+
 def linear_fit(xdata, ydata):
     params = linregress(xdata, ydata)
 
@@ -84,14 +90,17 @@ def gaussian_fit(xdata, ydata):
 def exponential(x, a, b):
     return a * np.exp(-b * x)
 
+def linear(x, a, b):
+    return a*x + b
+
 def atau_Z(Z, c, n):
     return c * Z ** n
 
-def exponential_fit(xdata, ydata, guess, func=exponential):
+def exponential_fit(xdata, ydata, guess, func=exponential, yerr=0):
     
-    popt, pcov = curve_fit(func, xdata, ydata, p0=guess)
+    popt, pcov = curve_fit(func, xdata, ydata, p0=guess, sigma=yerr, absolute_sigma=True)
 
-    return popt[0], popt[1]
+    return popt[0], popt[1], pcov
 
 
 def find_nearest(array, value):

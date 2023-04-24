@@ -106,10 +106,10 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
     pythasson_array = moy_comptes_array * np.sqrt((pythasson_array[i]/somme_comptes_array[i])**2 + (pythasson_array[0]/somme0)**2)
 
     ### AFFICHAGE DU GRAPHIQUE ###
-    guess = (somme0, 0)
-    a, mu = exponential_fit(epaisseur_array, moy_comptes_array, guess)
-    print(f"a = {a}")
-    print(f"mu = {mu}")
+    # guess = (somme0, 0)
+    # a, mu = exponential_fit(epaisseur_array, moy_comptes_array, guess)
+    # print(f"a = {a}")
+    # print(f"mu = {mu}")
 
     #### NOTE: mu est ici le coefficient d'atténuation pour le matériau
 
@@ -137,17 +137,27 @@ path = "./Data/"
 
 title = "Nb comptes en fct de l'épaisseur de filtre, 50 kV, 15 uA, Aluminium"
 
-# uncx = np.zeros(len(filenames))
-# uncy = np.ones(len(filenames))
-# fig1 = generer_graph(filenames, path, title, selected_range="31keV", uncertainties=(uncx, uncy))
+uncx = np.zeros(len(filenames))
+uncy = np.ones(len(filenames))
+fig1 = generer_graph(filenames, path, title, selected_range="31keV", uncertainties=(uncx, uncy))
+
+plt.legend()
+plt.show()
+
+plt.close()
 
 uncx = np.zeros(len(filenames))
 uncy = np.ones(len(filenames))
 fig2 = generer_graph(filenames, path, title, selected_range="all", uncertainties=(uncx, uncy))
 
-# uncx = np.zeros(len(filenames))
-# uncy = np.ones(len(filenames))
-# fig3 = generer_graph(filenames, path, title, selected_range="12keV", uncertainties=(uncx, uncy))
+plt.legend()
+plt.show()
+
+plt.close()
+
+uncx = np.zeros(len(filenames))
+uncy = np.ones(len(filenames))
+fig3 = generer_graph(filenames, path, title, selected_range="12keV", uncertainties=(uncx, uncy))
 
 plt.legend()
 plt.show()
