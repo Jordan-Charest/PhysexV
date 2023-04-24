@@ -123,7 +123,8 @@ def a_tau(N0, Nt, A, rho, t):
     N_incert = N * np.sqrt((N0_incert/N0_val)**2 + (Nt_incert/Nt_val)**2)
     # print(f"N = {N}±{N_incert}")
     ln_t = np.log(N)/t
-    incert_ln_t = ln_t * np.sqrt((N_incert/N)**2 + (t_incert/t)**2)
+    # incert_ln_t = ln_t * np.sqrt((N_incert/N)**2 + (t_incert/t)**2)
+    incert_ln_t = N_incert
 
     avo = 6.022e23
     

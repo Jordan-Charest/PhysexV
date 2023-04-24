@@ -3,6 +3,7 @@ import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
 import sets_donnees
+from decimal import Decimal
 
 def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0,0)):
     
@@ -56,11 +57,13 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
             indice_max = find_nearest(abscisses_array, 50)
 
         elif selected_range == "31keV":
+            plage = "31±0,23 keV"
             indice_centre = find_nearest(abscisses_array, 31)
             indice_min = int(indice_centre-15)
             indice_max = int(indice_centre+15)
 
         elif selected_range == "10keV":
+            plage = "10±0,23 keV"
             indice_centre = find_nearest(abscisses_array, 10)
             indice_min = int(indice_centre-15)
             indice_max = int(indice_centre+15)
@@ -126,38 +129,40 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
     print(f"Range: {selected_range}")
     print(f"ARRAY ATAU: {atau_array}")
 
-    Z_array_log = np.log10(Z_array)
-    atau_array_log = np.log10(atau_array)
-    print(f"ARRAY INCERTITUDE ATAU: {atau_incert_array}")
+    # Z_array_log = np.log10(Z_array)
+    # atau_array_log = np.log10(atau_array)
+    # print(f"ARRAY INCERTITUDE ATAU: {atau_incert_array}")
     atau_incert_array_log = np.log10(atau_incert_array)
 
-    slope, intercept = linear_fit(Z_array_log, atau_array_log)
-    print(f"slope={slope}, intercept={intercept}")
+    # slope, intercept = linear_fit(Z_array_log, atau_array_log)
+    # print(f"slope={slope}, intercept={intercept}")
 
-    # guess = (0,4)
-    # c, n = exponential_fit(Z_array, atau_array, guess, func=atau_Z)
-    # print(f"c={c}, n={n}")
+    guess = (0,4)
+    c, n, pcov = exponential_fit(Z_array, atau_array, guess, func=atau_Z, yerr=atau_incert_array)
+    print(f"c={c}, n={n}")
 
     ### AFFICHAGE DU GRAPHIQUE ###
 
 
 
 
-
-    # fig = plt.scatter(Z_array, atau_array)
-    x_steps = np.log10(np.arange(10, 74, 1))
-    # plt.plot(x_steps, atau_Z(x_steps, c, n))
+    if selected_range=="all":
+        fig = plt.scatter(Z_array, atau_array, label=f"a_tau, tout le spectre")
+    else:
+        fig = plt.scatter(Z_array, atau_array, label=f"a_tau, plage de {plage}")
+    x_steps = np.arange(10, 75, 1)
+    plt.plot(x_steps, atau_Z(x_steps, c, n), label=f"Lissage exponentiel, a_tau={'%.2E' % Decimal(c)}*Z^{n:.2f}")
     # fig = plt.errorbar(Z_array, atau_array, xerr = 0, yerr = atau_incert_array, label=f"{selected_range}", fmt='o', capsize=3, markersize=3)
-    fig = plt.scatter(Z_array, atau_array, label=f"{selected_range}")
-    for i, Zlog in enumerate(Z_array_log):
-        plt.annotate(f"{10**Zlog:.0f}", (Zlog, atau_array_log[i]) )
-    plt.plot(10**x_steps, 10**(x_steps*slope + intercept))
+    # fig = plt.scatter(Z_array, atau_array, label=f"{selected_range}")
+    # for i, Zlog in enumerate(Z_array_log):
+    #     plt.annotate(f"{10**Zlog:.0f}", (Zlog, atau_array_log[i]) )
+    # plt.plot(10**x_steps, 10**(x_steps*slope + intercept))
     plt.title(title)
 
-    plt.yscale("log")
-    plt.xscale("log")
-    plt.xlabel("log10(Z)")
-    plt.ylabel("log10(atau)")
+    # plt.yscale("log")
+    # plt.xscale("log")
+    plt.xlabel("Z")
+    plt.ylabel("atau")
 
     return fig
 
@@ -170,6 +175,10 @@ path = "./Data/"
 title = "a_tau en fct du Z du matériau, 50 kV, 15 uA"
 
 uncx = np.zeros(len(filenames)-1)
+uncy = np.ones(len(filenames)-1)
+fig3 = generer_graph(filenames, path, title, selected_range="10keV", uncertainties=(uncx, uncy))
+
+uncx = np.zeros(len(filenames)-1)
 uncy = np.zeros(len(filenames)-1)
 fig1 = generer_graph(filenames, path, title, selected_range="31keV", uncertainties=(uncx, uncy))
 
@@ -177,9 +186,7 @@ uncx = np.zeros(len(filenames)-1)
 uncy = np.ones(len(filenames)-1)
 fig2 = generer_graph(filenames, path, title, selected_range="all", uncertainties=(uncx, uncy))
 
-uncx = np.zeros(len(filenames)-1)
-uncy = np.ones(len(filenames)-1)
-fig3 = generer_graph(filenames, path, title, selected_range="10keV", uncertainties=(uncx, uncy))
+
 
 plt.legend()
 plt.show()

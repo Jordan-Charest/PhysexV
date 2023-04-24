@@ -4,7 +4,7 @@ import scipy as sp
 import matplotlib.pyplot as plt
 import sets_donnees
 
-def generer_mu(filenames, path, title, selected_range="all", uncertainties=(0,0), color="black"):
+def generer_mu(filenames, path, title, selected_range="all", uncertainties=(0,0), set="Al", color="black"):
 
     uncx, uncy = uncertainties[0], uncertainties[1]
 
@@ -95,7 +95,11 @@ def generer_mu(filenames, path, title, selected_range="all", uncertainties=(0,0)
         somme_comptes_array[i] = somme
         incert_array[i] = np.sqrt(somme)
 
-        if i == 1:
+        if i == 1 and set == "Al":
+            somme1 = somme
+            somme1_incert = np.sqrt(somme)
+
+        if i == 0 and set == "Cu":
             somme1 = somme
             somme1_incert = np.sqrt(somme)
 
@@ -137,16 +141,18 @@ title = "Nb comptes en fct de l'épaisseur de filtre, 50 kV, 15 uA, Aluminium"
 # uncy = np.ones(len(filenames))
 # fig3 = generer_graph(filenames, path, title, selected_range=10, uncertainties=(uncx, uncy), color="blue")
 
-al_mu_all, al_err_mu_all = generer_mu(filenames, path, title, selected_range="all", color="cyan")
+al_mu_all, al_err_mu_all = generer_mu(filenames, path, title, selected_range="all", set="Al", color="C0")
 
-al_mu15, al_err_mu15 = generer_mu(filenames, path, title, selected_range=15, color="green")
+al_mu15, al_err_mu15 = generer_mu(filenames, path, title, selected_range=15, set="Al", color="C0")
 
-al_mu20, al_err_mu20 = generer_mu(filenames, path, title, selected_range=20, color="orange")
+al_mu20, al_err_mu20 = generer_mu(filenames, path, title, selected_range=20, set="Al", color="C0")
 
-al_mu30, al_err_mu30 = generer_mu(filenames, path, title, selected_range=30, color="red")
+al_mu30, al_err_mu30 = generer_mu(filenames, path, title, selected_range=30, set="Al", color="C0")
 
 list_al_data = [al_mu15, al_mu20, al_mu30]
 list_al_err = [al_err_mu15, al_err_mu20, al_err_mu30]
+
+print(f"AL: {list_al_data}, {list_al_err}")
 
 list_al_data_nist = [21.479, 9.291, 3.046]
 
@@ -161,17 +167,17 @@ filenames = sets_donnees.Cu_set
 path = "./Data/"
 
 title = "Nb comptes en fct de l'épaisseur de filtre, 50 kV, 15 uA, Cuivre"
-cu_mu_all, cu_err_mu_all = generer_mu(filenames, path, title, selected_range="all", color="cyan")
+cu_mu_all, cu_err_mu_all = generer_mu(filenames, path, title, selected_range="all", set="Cu", color="C0")
 
-cu_mu15, cu_err_mu15 = generer_mu(filenames, path, title, selected_range=15, color="green")
+cu_mu15, cu_err_mu15 = generer_mu(filenames, path, title, selected_range=15, set="Cu", color="C0")
 
-cu_mu20, cu_err_mu20 = generer_mu(filenames, path, title, selected_range=20, color="orange")
+cu_mu20, cu_err_mu20 = generer_mu(filenames, path, title, selected_range=20, set="Cu", color="C0")
 
-cu_mu30, cu_err_mu30 = generer_mu(filenames, path, title, selected_range=30, color="red")
+cu_mu30, cu_err_mu30 = generer_mu(filenames, path, title, selected_range=30, set="Cu", color="C0")
 
 list_cu_data = [cu_mu15, cu_mu20, cu_mu30]
 list_cu_err = [cu_err_mu15, cu_err_mu20, cu_err_mu30]
-print(list_cu_data)
+print(f"CU: {list_cu_data}, {list_cu_err}")
 
 list_cu_data_nist = [661.489, 301.846, 97.548]
 
@@ -184,10 +190,10 @@ xdata = [1, 4, 7]
 xdata_nist = [2, 5, 8]
 
 for i in range(3):
-    ax1.errorbar(xdata[i], list_al_data[i], yerr=list_al_err[i], fmt='o', capsize=4)
-    ax1.errorbar(xdata_nist[i], list_al_data_nist[i], yerr=0, fmt='o', capsize=4)
-    ax2.errorbar(xdata[i], list_cu_data[i], yerr=list_cu_err[i], fmt='o', capsize=4)
-    ax2.errorbar(xdata_nist[i], list_cu_data_nist[i], yerr=0, fmt='o', capsize=4)
+    ax1.errorbar(xdata[i], list_al_data[i], yerr=list_al_err[i], fmt='o', capsize=4, color="C0", label="Données expérimentales")
+    ax1.errorbar(xdata_nist[i], list_al_data_nist[i], yerr=0, fmt='o', capsize=4, color="C1", label="Valeurs de référence du NIST")
+    ax2.errorbar(xdata[i], list_cu_data[i], yerr=list_cu_err[i], fmt='o', capsize=4, color="C0")
+    ax2.errorbar(xdata_nist[i], list_cu_data_nist[i], yerr=0, fmt='o', capsize=4, color="C1")
 
 ax1.get_xaxis().set_visible(False)
 ax2.get_xaxis().set_visible(False)
@@ -195,5 +201,8 @@ ax2.get_xaxis().set_visible(False)
 ax1.set_ylabel("Al")
 ax2.set_ylabel("Cu")
 
-# plt.legend()
+ax1.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
+          fancybox=True, ncol=2)
+
+plt.legend()
 plt.show()

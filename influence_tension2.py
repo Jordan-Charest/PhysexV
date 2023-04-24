@@ -113,7 +113,7 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
 
     xdata = np.arange(tension_array[0], tension_array[-1]+1, 0.5)
 
-    fig = plt.errorbar(tension_array, somme_comptes_array, yerr=poisson_array, label=f"{selected_range}", capsize=3, markersize=3, fmt='o')
+    fig = plt.errorbar(tension_array, somme_comptes_array, yerr=poisson_array, capsize=3, markersize=3, fmt='o')
 
 
     # plt.plot(xdata, xdata*popt[0]+popt[1], label=f"Lissage linéaire avec incertitude, pente={popt[0]:.1f}, R^2={r_squared:.5f}")
@@ -122,9 +122,9 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
     # plt.xscale("log")
     # plt.yscale("log")
     # plt.xscale("log")
-    plt.xlabel("Courant [uA]")
+    plt.xlabel("Tension [kV]")
 
-    plt.ylabel("Somme du nombre de comptes total")
+    plt.ylabel("Somme du nombre de comptes sur la région d'intérêt")
 
 # DEMANDER: nb de comptes, diviser par live time ou real time?
 

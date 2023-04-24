@@ -53,6 +53,7 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
             indice_min = int(indice_centre-15)
             indice_max = int(indice_centre+15)
 
+
         elif selected_range == "12keV":
             indice_centre = find_nearest(abscisses_array, 12)
             indice_min = int(indice_centre-15)
@@ -62,6 +63,9 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
             indice_centre = find_nearest(abscisses_array, centre)
             indice_min = int(indice_centre-largeur/2)
             indice_max = int(indice_centre+largeur/2)
+
+        if selected_range != "all":
+            demi_largeur = abscisses_array[indice_centre]-abscisses_array[indice_min]
 
 
         # On restreint l'array sur le domaine d'intérêt
@@ -114,10 +118,13 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
 
     xdata = np.arange(courant_array[0], courant_array[-1]+1, 0.5)
 
-    fig = plt.errorbar(courant_array, somme_comptes_array, yerr=poisson_array, label=f"{selected_range}", capsize=3, markersize=3, fmt='o')
+    fig = plt.errorbar(courant_array, somme_comptes_array, yerr=poisson_array, capsize=3, markersize=3, fmt='o')
 
 
-    plt.plot(xdata, xdata*popt[0]+popt[1], label=f"Lissage linéaire avec incertitude, pente={popt[0]:.1f}, R^2={r_squared:.5f}")
+    plt.plot(xdata, xdata*popt[0]+popt[1], label=f"Lissage linéaire avec incertitude")
+    indice = int(len(somme_comptes_array)/2)
+    plt.text(8, somme_comptes_array[indice],f'{popt[0]:.2f}x+{popt[1]:.2f}, R^2={r_squared:.5f}', horizontalalignment='center',
+     verticalalignment='center')
 
     # plt.yscale("log")
     # plt.xscale("log")
@@ -125,11 +132,14 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
     # plt.xscale("log")
     plt.xlabel("Courant [uA]")
 
-    plt.ylabel("Somme du nombre de comptes total")
+    plt.ylabel("Somme du nombre de comptes sur la région d'intérêt")
 
 # DEMANDER: nb de comptes, diviser par live time ou real time?
 
-    plt.title(f"Nombre de comptes en fonction du courant, {tension} kV")
+    if selected_range != "all":
+        plt.title(f"Nombre de comptes sur la plage {selected_range}±{demi_largeur:.2f} keV en fonction du courant à {tension} kV")
+    else:
+        plt.title(f"Nombre de comptes sur tout le spectre en fonction du courant à {tension} kV")
 
     return fig
 

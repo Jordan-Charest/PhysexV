@@ -85,7 +85,9 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
         if diviser_par_temps:
             somme = somme/live_time
 
-        
+        somme_comptes_array_all = somme_comptes_array
+        epaisseur_array_all = epaisseur_array
+        incert_array_all = incert_array
 
         tension_array[i] = tension
         courant_array[i] = courant
@@ -95,21 +97,28 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
         somme_comptes_array[i] = somme
         incert_array[i] = np.sqrt(somme)
 
-        if i == 1:
+    #     if i == 1:
+    #         somme1 = somme
+    #         somme1_incert = np.sqrt(somme)
+
+        if i == 0:
             somme1 = somme
             somme1_incert = np.sqrt(somme)
 
 
-    tension_array = tension_array[1:]
-    courant_array = courant_array[1:]
-    livetime_array = livetime_array[1:]
-    realtime_array = realtime_array[1:]
-    epaisseur_array = epaisseur_array[1:]
-    somme_comptes_array = somme_comptes_array[1:]
-    incert_array = incert_array[1:]
+    # tension_array = tension_array[1:]
+    # courant_array = courant_array[1:]
+    # livetime_array = livetime_array[1:]
+    # realtime_array = realtime_array[1:]
+    # epaisseur_array = epaisseur_array[1:]
+    # somme_comptes_array = somme_comptes_array[1:]
+    # incert_array = incert_array[1:]
 
     moy_comptes_array = somme_comptes_array / somme1
     incert_array = moy_comptes_array * np.sqrt((incert_array / somme_comptes_array)**2 + (somme1_incert / somme1)**2)
+
+    moy_comptes_array_all = somme_comptes_array_all / somme1
+    incert_array_all = moy_comptes_array_all * np.sqrt((incert_array_all / somme_comptes_array_all)**2 + (somme1_incert / somme1)**2)
 
     # pythasson_array = moy_comptes_array * np.sqrt((pythasson_array/somme_comptes_array)**2 + (pythasson_array[0]/somme0)**2)
 
@@ -123,7 +132,7 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
 
     #### NOTE: mu est ici le coefficient d'atténuation pour le matériau
 
-    fig = plt.errorbar(epaisseur_array, moy_comptes_array, xerr = 0, yerr = incert_array, label=f"{label_str}, mu={mu:.2f}±{err_mu:.2f}", fmt='o', color=color, capsize=5, markersize=3)
+    fig = plt.errorbar(epaisseur_array_all, moy_comptes_array_all, xerr = 0, yerr = incert_array_all, label=f"{label_str}, mu={mu:.2f}±{err_mu:.2f}", fmt='o', color=color, capsize=5, markersize=3)
     # fig = plt.scatter(epaisseur_array, moy_comptes_array, label=f"{label_str}, mu={mu:.3f}", color=color)
     x_points = np.arange(epaisseur_array[0], epaisseur_array[-1], (epaisseur_array[-1]-epaisseur_array[0])/50)
     plt.plot(x_points, exponential(x_points, a, mu), color=color)
@@ -135,7 +144,7 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
     plt.xlabel("Épaisseur de filtre [cm]")
 
     if diviser_par_temps:
-        plt.ylabel("Rapport Nt/N1 moyen par seconde [normalisé p.r. à l'épaisseur minimale]")
+        plt.ylabel("Rapport Nt/N0 par seconde")
     else:
         plt.ylabel("Rapport Nt/N0 moyen total")
 

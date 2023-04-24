@@ -5,7 +5,7 @@ from fonctions import *
 
 ### PARAMÈTRES ###
 
-filename = "50_15_Al&10" # Fichier à charger
+filename = "50_15_pas" # Fichier à charger
 multifiltre = True
 filepath = f"./Data/{filename}.mca" # Nom du fichier à analyser
 diviser_par_temps = True # Diviser le nb de comptes par le live time
@@ -16,7 +16,7 @@ diviser_par_temps = True # Diviser le nb de comptes par le live time
 
 tension, courant, filtre = extraire_params(filename)
 data_array, abscisses_array, live_time, real_time = extraire_data(filepath)
-# indices_pics = trouver_pic(data_array)
+indices_pics = trouver_pic(data_array)
 # print(indices_pics)
 
 
@@ -34,22 +34,22 @@ abscisses_array = etalonnage(abscisses_array)
 
 fig = plt.plot(abscisses_array, data_array)
 # plt.scatter([abscisses_array[indice] for indice in indices_pics], [data_array[indice] for indice in indices_pics])
-# for i, indice in enumerate(indices_pics):
-#     plt.annotate("%.2f" % abscisses_array[indice], (abscisses_array[indice], data_array[indice]))
+for i, indice in enumerate(indices_pics[1:-2]):
+    plt.annotate("%.2f" % abscisses_array[indice], (abscisses_array[indice], data_array[indice]))
 
 plt.yscale("log")
 plt.xlabel("Énergie [keV]")
 
 if diviser_par_temps:
-    plt.ylabel("Nombre de comptes par seconde [log]")
+    plt.ylabel("Nombre de comptes par seconde [éch. log]")
 else:
     plt.ylabel("Nombre de comptes total [log]")
 
 # DEMANDER: nb de comptes, diviser par live time ou real time?
 
-plt.title(f"Nombre de comptes en fonction de l'énergie, {tension} V, {courant} A, filtres {filtre}")
+# plt.title(f"Nombre de comptes en fonction de l'énergie, {tension} V, {courant} A, filtres {filtre}")
 
-plt.axvline(x=10, color="r", label="10 keV")
+# plt.axvline(x=10, color="r", label="10 keV")
 
 plt.show()
 
