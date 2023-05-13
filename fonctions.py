@@ -2,9 +2,12 @@ import numpy as np
 from scipy.stats import linregress
 from scipy.optimize import curve_fit
 from scipy.signal import find_peaks_cwt
+from uncertainties import ufloat
+import uncertainties.umath as math
+from uncertainties import unumpy as unp
 
 
-def extraire_data(filepath):
+def extraire_data(filepath, w_uncert=False):
 
     # np.array pour stocker le nombre de comptes
     data_array = np.empty(4096)
@@ -23,17 +26,22 @@ def extraire_data(filepath):
     for index, line in enumerate(f):
         if index == 7: # Live time
             ind = find_nth_occurrence(line, "-", 1)
-            live_time = float(line[ind+2:])
+            live_time = ufloat(float(line[ind+2:]), 0.0000005)
 
         if index == 8: # Real time
             ind = find_nth_occurrence(line, "-", 1)
-            real_time = float(line[ind+2:])
+            real_time = ufloat(float(line[ind+2:]), 0.0000005)
 
         if index > 4112: # Fin des données
             break
 
         if index > 16: # Début des données
-            data_array[index-17] = int(line)
+            if not w_uncert:
+                data_array[index-17] = int(line)
+            if w_uncert:
+                if index == 17:
+                    data_array = unp.uarray(data_array, 0)
+                data_array[index-17] = ufloat(int(line), np.sqrt(int(line)))
 
     f.close()
 
@@ -60,35 +68,43 @@ def fit_w_sigma(xdata, ydata, incert, func):
 
     return popt, pcov
 
-def linear_fit(xdata, ydata):
-    params = linregress(xdata, ydata)
+# def linear_fit(xdata, ydata):
+#     params = linregress(xdata, ydata)
 
-    return params.slope, params.intercept
+#     return params.slope, params.intercept
 
-def etalonnage(canaux):
+def etalonnage(canaux, num):
 
-    params = linregress([0, 921.8, 1173.19, 3895.6], [0, 13.95, 17.24, 59.54])
-    # Ce qui nous donne un std error, nice
+    if num == 1:
+        params = linregress([0, 921.8, 1173.19, 3895.6], [0, 13.95, 17.24, 59.54])
+        # Ce qui nous donne un std error, nice
+    elif num == 2:
+        params = linregress([0, 931.54, 1173.3, 3896.69], [0, 13.95, 17.24, 59.54])
 
     return params.slope * canaux + params.intercept
 
 
 def trouver_pic(data):
-    indices = find_peaks_cwt(data, 5, min_snr=3)
+    indices = find_peaks_cwt(data, 4, min_snr=3)
     #indices = find_peaks(data, height=7, threshold=20, distance=50)[0]
 
     return indices
 
 
-def gauss(x, H, A, x0, sigma):
-    return H + A * np.exp(-(x-x0)**2 / (2 * sigma ** 2))
+def gaussian(x, sigma, mu, H):
+    return H + 1/(sigma * np.sqrt(2*np.pi))* np.exp(-0.5 * (x-mu)**2 / sigma**2)
 
 
-def gaussian_fit(xdata, ydata):
-    return
+def gaussian_fit(xdata, ydata, guess, yerr=0):
+
+    popt, pcov = curve_fit(gaussian, xdata, ydata, p0=guess, sigma=yerr, absolute_sigma=True)
+
+
+    return popt, pcov
 
 def exponential(x, a, b):
     return a * np.exp(-b * x)
+    # return np.exp(-b*x)
 
 def linear(x, a, b):
     return a*x + b
@@ -97,8 +113,23 @@ def atau_Z(Z, c, n):
     return c * Z ** n
 
 def exponential_fit(xdata, ydata, guess, func=exponential, yerr=0):
-    
+
+    if type(yerr) == int:
+        yerr = np.zeros(len(xdata))
+    # xdata = [float(i) for i in xdata]
+    # ydata = [float(i) for i in ydata]
+    # yerr = [float(i) for i in yerr]
+
+    xdata = xdata.astype(dtype=np.float32)
+    ydata = ydata.astype(dtype=np.float32)
+    yerr = yerr.astype(dtype=np.float32)
     popt, pcov = curve_fit(func, xdata, ydata, p0=guess, sigma=yerr, absolute_sigma=True)
+
+    return popt[0], popt[1], pcov
+
+def linear_fit(xdata, ydata, guess, func=linear, yerr=0):
+
+    popt, pcov = curve_fit(func, xdata, ydata, p0=guess, absolute_sigma=True)
 
     return popt[0], popt[1], pcov
 
@@ -112,23 +143,23 @@ def a_tau(N0, Nt, A, rho, t):
     # print(f"A={A}, rho={rho}, t={t}")
 
     t_incert = 0.06375
-    N0_val = N0[0]
-    N0_incert = N0[1]
-    Nt_val = Nt[0]
-    Nt_incert = Nt[1]
+    N0_val = N0.nominal_value
+    N0_incert = N0.std_dev
+    Nt_val = Nt.nominal_value
+    Nt_incert = Nt.std_dev
 
     # print(f"N0={N0_val}±{N0_incert}"); print(f"Nt={Nt_val}±{Nt_incert}")
 
-    N = Nt_val/N0_val
-    N_incert = N * np.sqrt((N0_incert/N0_val)**2 + (Nt_incert/Nt_val)**2)
+    N = Nt/N0
+    # N_incert = N * np.sqrt((N0_incert/N0_val)**2 + (Nt_incert/Nt_val)**2)
     # print(f"N = {N}±{N_incert}")
-    ln_t = np.log(N)/t
+    # ln_t = np.log(N)/t
     # incert_ln_t = ln_t * np.sqrt((N_incert/N)**2 + (t_incert/t)**2)
-    incert_ln_t = N_incert
+    # incert_ln_t = N_incert
 
     avo = 6.022e23
     
-    return (-np.log(N) * A / (rho * t * avo) - 0.2 * A / avo, (incert_ln_t)*A/(rho*avo))
+    return -math.log(N) * A / (rho * t * avo) - 0.2 * A / avo
 
 
 def find_nth_occurrence(string, substring, n):

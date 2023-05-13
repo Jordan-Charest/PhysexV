@@ -8,7 +8,7 @@ from uncertainties import unumpy as unp
 
 ### PARAMÈTRES ###
 
-filename = "0_0_pas_calibration_Am" # Fichier à charger
+filename = "50_15_Al&10" # Fichier à charger
 multifiltre = True
 filepath = f"./Data/seance1/{filename}.mca" # Nom du fichier à analyser
 diviser_par_temps = True # Diviser le nb de comptes par le live time
@@ -32,16 +32,22 @@ if diviser_par_temps: # Diviser par le live time
 abscisses_array = etalonnage(abscisses_array, 1)
 
 
-
 ### AFFICHAGE DU GRAPHIQUE ###
 
+incert_array = unp.std_devs(data_array)
 data_array = unp.nominal_values(data_array)
+
+larg = 60
 fig = plt.plot(abscisses_array, data_array)
 # plt.scatter([abscisses_array[indice] for indice in indices_pics], [data_array[indice] for indice in indices_pics])
-# for i, indice in enumerate(indices_pics[1:-2]):
-#     plt.annotate("%.2f" % abscisses_array[indice], (abscisses_array[indice], data_array[indice]))
+for i, indice in enumerate(indices_pics[1:-2]):
+    print(data_array[indice-larg:indice+larg])
+    print(incert_array[indice-larg:indice+larg])
+    popt, pcov = gaussian_fit(abscisses_array[indice-larg:indice+larg], data_array[indice-larg:indice+larg], (0.01, abscisses_array[indice], data_array[indice]), yerr=incert_array[indice-larg:indice+larg])
+    plt.plot(abscisses_array[indice-larg:indice+larg], gaussian(abscisses_array[indice-larg:indice+larg], *popt))
+    plt.annotate("%.2f" % abscisses_array[indice], (abscisses_array[indice], data_array[indice]))
 
-# plt.yscale("log")
+plt.yscale("log")
 plt.xlabel("Énergie [keV]")
 
 if diviser_par_temps:

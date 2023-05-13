@@ -45,9 +45,8 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
 
         try:
             tension, courant, filtre = extraire_params(filename)
-            data_array, abscisses_array, live_time, real_time = extraire_data(filepath, w_uncert=True)
+            data_array, abscisses_array, live_time, real_time = extraire_data(filepath)
         except:
-            raise ValueError("Ayoye")
             continue
 
         if mat == "Cu":
@@ -61,7 +60,7 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
             epaisseur = ufloat(0, 0)
         else:
             index_epp = find_nth_occurrence(filtre, "&", 1)
-            epaisseur = ufloat(int(filtre[index_epp+1:]) * 0.00254, 0.06375*0.002540)
+            epaisseur = ufloat(int(filtre[index_epp+1:]) * 0.00254, 0)
 
         # Selection de la bonne plage
 
@@ -102,10 +101,10 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
         #     pythasson += array_poisson[j]**2
         # pythasson = np.sqrt(pythasson)/live_time
 
-        somme = data_reduit.sum()
-        # incert_somme = np.sqrt(somme)
+        somme = np.sum(data_reduit)
+        incert_somme = np.sqrt(somme)
 
-        somme = ufloat(somme.nominal_value, somme.std_dev) / live_time
+        somme = ufloat(somme, incert_somme) / live_time
 
 
         # if diviser_par_temps:
@@ -129,15 +128,13 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
 
     ### AFFICHAGE DU GRAPHIQUE ###
 
-    comptes_array_normalise[0] = ufloat(comptes_array_normalise[0].nominal_value, 0.0004)
-
 
     epaisseur_vals = np.array(unp.nominal_values(epaisseur_array))
     comptes_vals = np.array(unp.nominal_values(comptes_array_normalise))
-    print(comptes_vals)
+    # print(comptes_vals)
     comptes_incert = np.array(unp.std_devs(comptes_array_normalise))
-    print(comptes_incert)
-    guess = (1, 10)
+    # print(comptes_incert)
+    guess = (1, 20)
     a, mu, pcov = exponential_fit(epaisseur_vals, comptes_vals, guess, yerr=comptes_incert)
     print(f"a = {a}")
     print(f"mu = {mu}")
@@ -147,10 +144,10 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
 
     #### NOTE: mu est ici le coefficient d'atténuation pour le matériau
 
-    fig = plt.errorbar(unp.nominal_values(epaisseur_array), unp.nominal_values(comptes_array_normalise), xerr = unp.std_devs(epaisseur_array), yerr = unp.std_devs(comptes_array_normalise), fmt='o', color=color, capsize=3, markersize=3)
+    fig = plt.errorbar(unp.nominal_values(epaisseur_array), unp.nominal_values(comptes_array_normalise), xerr = unp.std_devs(epaisseur_array), yerr = unp.std_devs(comptes_array_normalise), fmt='o', color=color, capsize=5, markersize=3)
     # fig = plt.scatter(epaisseur_array, comptes_array_normalise, color=color)
     x_points = np.arange(epaisseur_vals[0], epaisseur_vals[-1]+0.003, (epaisseur_vals[-1]-epaisseur_vals[0])/50)
-    plt.plot(x_points, exponential(x_points, a, mu), color="C1", label=f"Lissage exponentiel avec incertitude\nNt/N0={a:.2f}*exp(-ux)\n u={mu:.2f}±{err_mu:.5f}")
+    plt.plot(x_points, exponential(x_points, a, mu), color="C1", label=f"Lissage exponentiel avec incertitude\nNt/N0={a:.2f}*exp(-{mu:.2f}x)\n ±{err_mu}")
 
     # plt.text(epaisseur_array[int(len(epaisseur_array)/2)-2], moy_comptes_array[int(len(moy_comptes_array)/2)+3],f'{a:.2f}*exp(-{mu:.2f}x)', horizontalalignment='center',
     #  verticalalignment='center')
@@ -186,64 +183,64 @@ plt.show()
 
 plt.close()
 
-uncx = np.zeros(len(filenames))
-uncy = np.ones(len(filenames))
-fig3 = generer_graph(filenames, path, title, selected_range=15, uncertainties=(uncx, uncy))
-plt.legend()
-plt.show()
+# uncx = np.zeros(len(filenames))
+# uncy = np.ones(len(filenames))
+# fig3 = generer_graph(filenames, path, title, selected_range=15, uncertainties=(uncx, uncy))
+# plt.legend()
+# plt.show()
 
-plt.close()
+# plt.close()
 
-uncx = np.zeros(len(filenames))
-uncy = np.ones(len(filenames))
-fig4 = generer_graph(filenames, path, title, selected_range=20, uncertainties=(uncx, uncy))
-plt.legend()
-plt.show()
+# uncx = np.zeros(len(filenames))
+# uncy = np.ones(len(filenames))
+# fig4 = generer_graph(filenames, path, title, selected_range=20, uncertainties=(uncx, uncy))
+# plt.legend()
+# plt.show()
 
-plt.close()
+# plt.close()
 
-uncx = np.zeros(len(filenames))
-uncy = np.ones(len(filenames))
-fig5 = generer_graph(filenames, path, title, selected_range=30, uncertainties=(uncx, uncy))
-plt.legend()
-plt.show()
+# uncx = np.zeros(len(filenames))
+# uncy = np.ones(len(filenames))
+# fig5 = generer_graph(filenames, path, title, selected_range=30, uncertainties=(uncx, uncy))
+# plt.legend()
+# plt.show()
 
-plt.close()
+# plt.close()
 
 ############################
 
-filenames = sets_donnees.Cu_set
-path = "./Data/seance1/"
+# filenames = sets_donnees.Cu_set
+# path = "./Data/seance1/"
 
-title = "Nb comptes en fct de l'épaisseur de filtre, 50 kV, 15 uA, Cuivre"
-uncx = np.zeros(len(filenames))
-uncy = np.ones(len(filenames))
-fig2 = generer_graph(filenames, path, title, selected_range="all", uncertainties=(uncx, uncy))
-plt.legend()
-plt.show()
+# title = "Nb comptes en fct de l'épaisseur de filtre, 50 kV, 15 uA, Cuivre"
+# uncx = np.zeros(len(filenames))
+# uncy = np.ones(len(filenames))
+# fig2 = generer_graph(filenames, path, title, selected_range="all", uncertainties=(uncx, uncy))
+# plt.legend()
+# plt.show()
 
-plt.close()
+# plt.close()
 
-uncx = np.zeros(len(filenames))
-uncy = np.ones(len(filenames))
-fig3 = generer_graph(filenames, path, title, selected_range=15, uncertainties=(uncx, uncy))
-plt.legend()
-plt.show()
+# uncx = np.zeros(len(filenames))
+# uncy = np.ones(len(filenames))
+# fig3 = generer_graph(filenames, path, title, selected_range=15, uncertainties=(uncx, uncy))
+# plt.legend()
+# plt.show()
 
-plt.close()
+# plt.close()
 
-uncx = np.zeros(len(filenames))
-uncy = np.ones(len(filenames))
-fig4 = generer_graph(filenames, path, title, selected_range=20, uncertainties=(uncx, uncy))
-plt.legend()
-plt.show()
+# uncx = np.zeros(len(filenames))
+# uncy = np.ones(len(filenames))
+# fig4 = generer_graph(filenames, path, title, selected_range=20, uncertainties=(uncx, uncy))
+# plt.legend()
+# plt.show()
 
-plt.close()
+# plt.close()
 
-uncx = np.zeros(len(filenames))
-uncy = np.ones(len(filenames))
-fig5 = generer_graph(filenames, path, title, selected_range=30, uncertainties=(uncx, uncy))
-plt.legend()
-plt.show()
+# uncx = np.zeros(len(filenames))
+# uncy = np.ones(len(filenames))
+# fig5 = generer_graph(filenames, path, title, selected_range=30, uncertainties=(uncx, uncy))
+# plt.legend()
+# plt.show()
 
-plt.close()
+# plt.close()

@@ -10,9 +10,9 @@ def print_somme_nb(filename, path, selected_range="all"):
     filepath = f"{path}{filename}.mca" # Nom du fichier à analyser
 
     tension, courant, filtre = extraire_params(filename)
-    data_array, abscisses_array, live_time, real_time = extraire_data(filepath)
+    data_array, abscisses_array, live_time, real_time = extraire_data(filepath, w_uncert=True)
 
-    abscisses_array = etalonnage(abscisses_array)
+    abscisses_array = etalonnage(abscisses_array, 1)
     # print(f"live time: {live_time}")
     # print(f"real time: {real_time}")
 
@@ -32,18 +32,18 @@ def print_somme_nb(filename, path, selected_range="all"):
     energie = abscisses_array[indice_min: indice_max]
     comptes = data_array[indice_min: indice_max]/live_time
 
-    moy = 0
-    nb = 0
+    moy = ufloat(0, 0)
+    nb = ufloat(0, 0)
 
     for i in range(len(energie)):
         moy += energie[i]*comptes[i]
         nb += comptes[i]
 
     # print(f"Pour {filename}: moy={(moy/nb):.2f}, {nb:.2f} comptes\n")
-    print(f"Pour {filename}: reduc de {( (11239-nb)/11239 * 100):.2f}%")
+    print(f"Pour {filename}: reduc de {( (ufloat(11239, 17.87)-nb)/ufloat(11239, 17.87) * 100):.2f}%")
 
 filename = "50_15_pas"
-path = "./Data/"
+path = "./Data/seance1/"
 print_somme_nb(filename, path)
 
 filename = "50_15_Al&10"
