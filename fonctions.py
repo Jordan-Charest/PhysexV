@@ -26,11 +26,11 @@ def extraire_data(filepath, w_uncert=False):
     for index, line in enumerate(f):
         if index == 7: # Live time
             ind = find_nth_occurrence(line, "-", 1)
-            live_time = ufloat(float(line[ind+2:]), 0.0000005)
+            live_time = ufloat(float(line[ind+2:]), 0.0005)
 
         if index == 8: # Real time
             ind = find_nth_occurrence(line, "-", 1)
-            real_time = ufloat(float(line[ind+2:]), 0.0000005)
+            real_time = ufloat(float(line[ind+2:]), 0.0005)
 
         if index > 4112: # Fin des données
             break
@@ -83,6 +83,16 @@ def etalonnage(canaux, num):
 
     return params.slope * canaux + params.intercept
 
+def etalonnage_w_stdev(canaux, num):
+
+    if num == 1:
+        params = linregress([0, 921.8, 1173.19, 3895.6], [0, 13.95, 17.24, 59.54])
+        # Ce qui nous donne un std error, nice
+    elif num == 2:
+        params = linregress([0, 931.54, 1173.3, 3896.69], [0, 13.95, 17.24, 59.54])
+
+    return params.slope * canaux + params.intercept, params.stderr
+
 
 def trouver_pic(data):
     indices = find_peaks_cwt(data, 4, min_snr=3)
@@ -102,9 +112,12 @@ def gaussian_fit(xdata, ydata, guess, yerr=0):
 
     return popt, pcov
 
-def exponential(x, a, b):
-    return a * np.exp(-b * x)
-    # return np.exp(-b*x)
+# def exponential(x, a, b):
+#     return a * np.exp(-b * x)
+#     # return np.exp(-b*x)
+
+def exponential(x, mu):
+    return np.exp(-mu*x)
 
 def linear(x, a, b):
     return a*x + b
@@ -125,7 +138,8 @@ def exponential_fit(xdata, ydata, guess, func=exponential, yerr=0):
     yerr = yerr.astype(dtype=np.float32)
     popt, pcov = curve_fit(func, xdata, ydata, p0=guess, sigma=yerr, absolute_sigma=True)
 
-    return popt[0], popt[1], pcov
+    # return popt[0], popt[1], pcov
+    return popt, pcov
 
 def linear_fit(xdata, ydata, guess, func=linear, yerr=0):
 
@@ -170,3 +184,11 @@ def find_nth_occurrence(string, substring, n):
         start = string.find(substring, start+len(substring))
         n -= 1
     return start
+
+
+def mse(actual, predicted):
+    actual = np.array(actual)
+    predicted = np.array(predicted)
+    differences = np.subtract(actual, predicted)
+    squared_differences = np.square(differences)
+    return squared_differences.mean()

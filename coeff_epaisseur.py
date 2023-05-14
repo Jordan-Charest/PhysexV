@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import sets_donnees
 from uncertainties import ufloat
 from uncertainties import unumpy as unp
+from decimal import Decimal
 
 def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0,0), color="C0", mat="Al"):
 
@@ -61,7 +62,8 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
             epaisseur = ufloat(0, 0)
         else:
             index_epp = find_nth_occurrence(filtre, "&", 1)
-            epaisseur = ufloat(int(filtre[index_epp+1:]) * 0.00254, 0.06375*0.002540)
+            ep = int(filtre[index_epp+1:]) * 0.00254
+            epaisseur = ufloat(ep, 0.06375*0.00254)
 
         # Selection de la bonne plage
 
@@ -123,13 +125,18 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
         if i == 0:
             somme0 = somme
 
+    # comptes_array_normalise = somme_comptes_array
+
+    # for i in comptes_array_normalise:
+    #     i = ufloat(i.nominal_value/somme0.nominal_value, i.nominal_value * np.sqrt((somme0.std_dev/somme0.nominal_value)**2+(i.std_dev/i.nominal_value)**2))
+
     comptes_array_normalise = somme_comptes_array / somme0
 
     # print(comptes_array_normalise)
 
     ### AFFICHAGE DU GRAPHIQUE ###
 
-    comptes_array_normalise[0] = ufloat(comptes_array_normalise[0].nominal_value, 0.0004)
+    comptes_array_normalise[0] = ufloat(comptes_array_normalise[0].nominal_value, np.sqrt(somme_comptes_array[0].nominal_value)/somme0.nominal_value)
 
 
     epaisseur_vals = np.array(unp.nominal_values(epaisseur_array))
@@ -137,20 +144,56 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
     print(comptes_vals)
     comptes_incert = np.array(unp.std_devs(comptes_array_normalise))
     print(comptes_incert)
-    guess = (1, 10)
-    a, mu, pcov = exponential_fit(epaisseur_vals, comptes_vals, guess, yerr=comptes_incert)
-    print(f"a = {a}")
+    guess = (10)
+    # a, mu, pcov = exponential_fit(epaisseur_vals, comptes_vals, guess, yerr=comptes_incert)
+    mu, pcov = exponential_fit(epaisseur_vals, comptes_vals, guess, yerr=comptes_incert)
+    # print(f"a = {a}")
+    mu = float(mu[0])
     print(f"mu = {mu}")
+    # err_mu = np.sqrt(np.diag(pcov))[1]
+    err_mu = np.sqrt(pcov)[0][0]
+    print(f"err mu = {err_mu}")
+    # err_a = np.sqrt(pcov[0][0])
+    # err_mu = np.sqrt(pcov[1][1])
+
+    x_points = np.arange(epaisseur_vals[0], epaisseur_vals[-1]+0.003, (epaisseur_vals[-1]-epaisseur_vals[0])/50)
+    y_points = exponential(x_points, mu)
+
+    # indice_CDA1 = find_nearest(y_points, 0.5)
+    # indice_CDA2 = find_nearest(y_points, 0.25)
+
+    # a_ufloat = ufloat(a, err_a)
+    mu_ufloat = ufloat(mu, err_mu)
+    print(mu_ufloat)
+
+    # Calcul de la CDA avec incertitudes
+    CDA1 = -1/mu_ufloat * math.log(0.5)
+    CDA2 = -1/mu_ufloat * math.log(0.25)
+
+    print(CDA1)
+    print(CDA2)
 
 
-    err_mu = np.sqrt(np.diag(pcov))[1]
+
+    # CDA1 = x_points[indice_CDA1]
+    # CDA1_incert = CDA1 * np.sqrt((0.06375/CDA1)**2+(err_mu/mu)**2)
+    # CDA2 = x_points[indice_CDA2]
+    # CDA2_incert = CDA2 * np.sqrt((0.06375*0.25/CDA1)**2+(err_mu/mu)**2)
+
+
+    comptes_array_normalise[0] = ufloat(comptes_array_normalise[0].nominal_value, 0)
+
+    actual = unp.nominal_values(comptes_array_normalise)
+    expected = exponential(unp.nominal_values(epaisseur_array), mu)
+
+    MSE = mse(actual, expected)
 
     #### NOTE: mu est ici le coefficient d'atténuation pour le matériau
 
     fig = plt.errorbar(unp.nominal_values(epaisseur_array), unp.nominal_values(comptes_array_normalise), xerr = unp.std_devs(epaisseur_array), yerr = unp.std_devs(comptes_array_normalise), fmt='o', color=color, capsize=3, markersize=3)
     # fig = plt.scatter(epaisseur_array, comptes_array_normalise, color=color)
-    x_points = np.arange(epaisseur_vals[0], epaisseur_vals[-1]+0.003, (epaisseur_vals[-1]-epaisseur_vals[0])/50)
-    plt.plot(x_points, exponential(x_points, a, mu), color="C1", label=f"Lissage exponentiel avec incertitude\nNt/N0={a:.2f}*exp(-ux)\n u={mu:.2f}±{err_mu:.5f}")
+    
+    plt.plot(x_points, y_points, color="C1", label=f"Lissage exponentiel avec incertitude\nNt/N0=exp(-ux)\n u={mu:.2f}±{err_mu:.5f}\nEQM={'%.2E' % Decimal(MSE)}\nCDA1 = {CDA1.nominal_value:.5f}±{CDA1.std_dev:.5f}\nCDA2 = {CDA2.nominal_value:.5f}±{CDA2.std_dev:.5f}")
 
     # plt.text(epaisseur_array[int(len(epaisseur_array)/2)-2], moy_comptes_array[int(len(moy_comptes_array)/2)+3],f'{a:.2f}*exp(-{mu:.2f}x)', horizontalalignment='center',
     #  verticalalignment='center')
@@ -166,7 +209,7 @@ def generer_graph(filenames, path, title, selected_range="all", uncertainties=(0
     else:
         plt.ylabel("Rapport Nt/N0 moyen total")
 
-    plt.title(title)
+    plt.title(title+f", {selected_range}")
 
     return fig
 
@@ -176,7 +219,7 @@ ranges = ["all", "31keV", "12keV", "custom"]
 filenames = sets_donnees.Al3_set
 path = "./Data/seance3/"
 
-title = "Nb comptes en fct de l'épaisseur de filtre, 50 kV, 15 uA, Aluminium"
+title = "50 kV, 15 uA, Al"
 
 uncx = np.zeros(len(filenames))
 uncy = np.ones(len(filenames))
@@ -215,7 +258,7 @@ plt.close()
 filenames = sets_donnees.Cu_set
 path = "./Data/seance1/"
 
-title = "Nb comptes en fct de l'épaisseur de filtre, 50 kV, 15 uA, Cuivre"
+title = "50 kV, 15 uA, Cu"
 uncx = np.zeros(len(filenames))
 uncy = np.ones(len(filenames))
 fig2 = generer_graph(filenames, path, title, selected_range="all", uncertainties=(uncx, uncy))

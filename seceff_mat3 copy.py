@@ -126,7 +126,8 @@ def generer_graph(filenames, path):
     atau_log10 = np.log10(donnees_atau[0])
     Z_log10 = np.log10(donnees_Z)
 
-    a, b, pcov = linear_fit(Z_log10, atau_log10, (4, 0), yerr=0) # Changer yerr éventuellement
+    a, b, pcov = linear_fit(Z_log10, atau_log10, (4, 0), yerr=unp.std_devs(atau_array[:-1])) # Changer yerr éventuellement
+    err_a = np.sqrt(pcov)[0][0]
     popt = [a, b]
 
     # Calcul R2:
@@ -142,7 +143,7 @@ def generer_graph(filenames, path):
 
     fig = plt.errorbar(donnees_Z, donnees_atau[0], yerr=donnees_atau[1], fmt='o', capsize=4, label=f"Section efficace a_tau")
 
-    plt.plot(10**x_steps, 10**(x_steps*a + b), color="C1", label=f"Lissage linéaire sur les données en log-log\n pente={a:.2f}, R^2={R2:.3f}")
+    plt.plot(10**x_steps, 10**(x_steps*a + b), color="C1", label=f"Lissage linéaire sur les données en log-log\n pente={a:.2f}±{err_a:.2f}, R^2={R2:.3f}")
 
     title = f"Section efficace a_tau en fonction du Z du matériau, 50 kV, 15 uA, plage de 31±{plage:.2f} keV"
 

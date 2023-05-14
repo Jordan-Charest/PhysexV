@@ -8,9 +8,9 @@ from uncertainties import unumpy as unp
 
 ### PARAMÈTRES ###
 
-filename = "0_0_pas_calibration_Am" # Fichier à charger
+filename = "50_15_Ag&1" # Fichier à charger
 multifiltre = True
-filepath = f"./Data/seance1/{filename}.mca" # Nom du fichier à analyser
+filepath = f"./Data/seance3/{filename}.mca" # Nom du fichier à analyser
 diviser_par_temps = True # Diviser le nb de comptes par le live time
 
 
@@ -29,7 +29,7 @@ if diviser_par_temps: # Diviser par le live time
     data_array = data_array / live_time
 
 # Étalonnage de l'axe des canaux (abscisses) en énergie
-abscisses_array = etalonnage(abscisses_array, 1)
+abscisses_array = etalonnage(abscisses_array, 2)
 
 
 
@@ -41,7 +41,7 @@ fig = plt.plot(abscisses_array, data_array)
 # for i, indice in enumerate(indices_pics[1:-2]):
 #     plt.annotate("%.2f" % abscisses_array[indice], (abscisses_array[indice], data_array[indice]))
 
-# plt.yscale("log")
+plt.yscale("log")
 plt.xlabel("Énergie [keV]")
 
 if diviser_par_temps:
